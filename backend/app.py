@@ -5,11 +5,15 @@ from urllib.parse import urlsplit
 from collections import defaultdict, deque
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 from pydantic import BaseModel, Field
 
-app = FastAPI(title='Corte Studio Reel Importer', version='1.0')
+LOCAL_MODE = os.getenv('CORTE_LOCAL') == '1'
+app = FastAPI(title='Corte Studio Reel Importer', version='1.1')
+if LOCAL_MODE:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1','localhost'])
 origins = [x.strip() for x in os.getenv('ALLOWED_ORIGINS','http://localhost:8000,http://127.0.0.1:8000').split(',') if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=['GET','POST'], allow_headers=['Content-Type'], expose_headers=['Content-Disposition','X-Reel-Code'])
 slots = threading.BoundedSemaphore(2)
@@ -31,7 +35,19 @@ def canonical(raw):
         raise HTTPException(422,'Pega un enlace HTTPS de Instagram con formato /reel/IDENTIFICADOR/.')
 
 @app.get('/health')
-def health(): return {'status':'ok','service':'corte-instagram','version':1}
+def health(): return {'status':'ok','service':'corte-instagram','version':1,'mode':'local' if LOCAL_MODE else 'hosted'}
+
+@app.get('/')
+def editor():
+    if not LOCAL_MODE: raise HTTPException(404,'Editor disponible en GitHub Pages.')
+    path=Path(__file__).resolve().parents[1]/'index.html'
+    if not path.is_file(): raise HTTPException(404,'Falta index.html. Extrae el proyecto completo.')
+    return FileResponse(path,media_type='text/html',headers={'Cache-Control':'no-store'})
+
+@app.get('/config.json')
+def local_config(request: Request):
+    if not LOCAL_MODE: raise HTTPException(404,'Configuracion local no disponible.')
+    return {'instagramServiceUrl':str(request.base_url).rstrip('/'),'mode':'local'}
 
 @app.post('/api/instagram')
 def download(body: Reel, request: Request):
@@ -45,8 +61,8 @@ def download(body: Reel, request: Request):
             while hits[key] and now-hits[key][0]>600: hits[key].popleft()
             if not hits[key]: del hits[key]
         q=hits[ip]
-        if len(q)>=6: raise HTTPException(429,'Límite de seis intentos cada diez minutos. Inténtalo después.')
-        q.append(now)
+        if not LOCAL_MODE and len(q)>=6: raise HTTPException(429,'Límite de seis intentos cada diez minutos. Inténtalo después.')
+        if not LOCAL_MODE: q.append(now)
     if not slots.acquire(blocking=False): raise HTTPException(503,'El servidor está ocupado. Inténtalo de nuevo en unos segundos.')
     folder=Path(tempfile.mkdtemp(prefix='corte-reel-'))
     try:

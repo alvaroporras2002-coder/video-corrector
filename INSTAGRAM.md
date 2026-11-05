@@ -1,6 +1,6 @@
 # Corte Studio · Importación de reels
 
-Incluye index.html completo y el servidor real backend/. El servidor NO está desplegado y la descarga desde Instagram NO está activada hasta conectarlo.
+Incluye index.html completo y el servidor real backend/. El servidor alojado NO está desplegado. Para uso personal, abre INICIAR_WINDOWS.bat o INICIAR_MAC.command: el editor local queda conectado automáticamente. Lee USO_LOCAL.md.
 
 ## 1. Publicar el editor en GitHub Pages
 Sube index.html y .nojekyll a tu repositorio. En Settings → Pages publica la rama y carpeta donde pusiste index.html. No pongas el código Python dentro del HTML: GitHub Pages solo sirve archivos estáticos.
