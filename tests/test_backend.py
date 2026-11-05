@@ -39,6 +39,22 @@ class BackendTests(unittest.TestCase):
     def test_instagram_error_is_reported(self):
         with patch.object(api.subprocess,'run',return_value=subprocess.CompletedProcess([],1,'','blocked')):
             self.assertEqual(self.client.post('/api/instagram',json={'url':self.url}).status_code,502)
+    def test_ambiguous_instagram_failure_does_not_claim_private_or_ip_ban(self):
+        error='ERROR: Requested content is not available, rate-limit reached or login required.'
+        with patch.object(api.subprocess,'run',return_value=subprocess.CompletedProcess([],1,'',error)):
+            response=self.client.post('/api/instagram',json={'url':self.url})
+        self.assertEqual(response.status_code,502)
+        self.assertIn('IG_ACCESS_RESTRICTED',response.json()['detail'])
+        self.assertIn('Referencia:',response.json()['detail'])
+    def test_specific_failures_are_distinguished(self):
+        self.assertEqual(api.downloader_failure('HTTP Error 429: Too Many Requests')[0],'IG_RATE_LIMIT')
+        self.assertEqual(api.downloader_failure('ERROR: HTTP Error 403 Forbidden')[0],'IG_FORBIDDEN')
+        self.assertEqual(api.downloader_failure('Requested format is not available')[0],'IG_FORMAT')
+        self.assertEqual(api.downloader_failure('Unable to extract video URL')[0],'IG_EXTRACTOR')
+    def test_diagnostics_redact_urls_and_temporary_paths(self):
+        diagnostic=api.clean_diagnostic('Failed https://example.com/?token=secret /tmp/hidden/video.mp4')
+        self.assertNotIn('secret',diagnostic)
+        self.assertNotIn('/tmp/',diagnostic)
     def test_timeout_is_reported(self):
         with patch.object(api.subprocess,'run',side_effect=subprocess.TimeoutExpired([],100)):
             self.assertEqual(self.client.post('/api/instagram',json={'url':self.url}).status_code,504)
