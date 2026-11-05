@@ -2,6 +2,16 @@
 
 Editor de video en español con interfaz oscura, bordes redondeados, línea de tiempo multipista, textos, audio, filtros, chroma key, fotogramas clave, guardado local y exportación mediante MediaRecorder.
 
+## Sin descargar ni instalar programas
+
+El editor funciona directamente en [GitHub Pages](https://alvaroporras2002-coder.github.io/video-corrector/). Si no puedes instalar nada en tu computadora, activa el backend desde el navegador con la configuración preparada:
+
+[Activar servidor en Render](https://render.com/deploy?repo=https://github.com/alvaroporras2002-coder/video-corrector)
+
+La configuración solicita **un único servicio Free**. Revisa y confirma el despliegue en tu cuenta de Render. Cuando aparezca Live, copia su URL HTTPS en Medios → Instagram → URL base del servicio. Consulta [SIN_INSTALAR.md](SIN_INSTALAR.md).
+
+No necesitas ZIP, Python ni Docker en tu computadora para este modo. El servicio no está activado hasta que lo confirmes en Render. El plan gratuito tiene límites y puede suspenderse; no es ilimitado. Instagram también puede bloquear descargas.
+
 ## Uso personal sin pagar alojamiento
 
 Descarga el proyecto completo con **Code → Download ZIP**, extrae la carpeta e instala Python 3.11 o superior. Abre **INICIAR_WINDOWS.bat** en Windows o **INICIAR_MAC.command** en Mac. En Linux ejecuta `sh iniciar_linux.sh`.

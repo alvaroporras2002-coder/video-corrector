@@ -1,0 +1,14 @@
+# Backend-only deployment. The editor remains on GitHub Pages.
+services:
+  - type: web
+    name: corte-studio-reels
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://alvaroporras2002-coder.github.io
