@@ -1,0 +1,13 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const script=html.match(/<script>([\s\S]*?)<\/script>/i)?.[1];
+assert(script,'Inline editor script missing');new vm.Script(script);
+for(const id of ['home','editor','preview','timeline','fileInput','modal'])assert(html.includes(`id="${id}"`),id);
+const config=JSON.parse(fs.readFileSync(path.join(root,'config.json'),'utf8'));assert.equal(typeof config.instagramServiceUrl,'string');
+const start=script.indexOf('function reelURL('),end=script.indexOf('function reelService(',start);assert(start>=0&&end>start);
+const sandbox={URL};vm.createContext(sandbox);vm.runInContext(script.slice(start,end)+';this.parseReel=reelURL',sandbox);
+assert.equal(sandbox.parseReel('https://www.instagram.com/reel/ABC_def123/?igsh=x').url,'https://www.instagram.com/reel/ABC_def123/');
+for(const url of ['https://instagram.com.evil.test/reel/ABC_def123/','http://instagram.com/reel/ABC_def123/','https://instagram.com@evil.test/reel/ABC_def123/','https://instagram.com/p/ABC_def123/'])assert.throws(()=>sandbox.parseReel(url));
+console.log('PASS: HTML script syntax, editor structure, config and Instagram URL validation. Browser rendering not tested.');
